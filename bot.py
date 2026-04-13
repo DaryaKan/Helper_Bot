@@ -1,12 +1,18 @@
+import asyncio
+import hashlib
+import hmac
+import json
 import logging
 import os
+import uuid
 from dataclasses import dataclass, field
+from urllib.parse import parse_qsl
 
+from aiohttp import web
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import (
     Application,
-    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     MessageHandler,
@@ -19,138 +25,287 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MAX_TASKS_PER_MESSAGE = 10
+MAX_TASKS_PER_LIST = 10
 
+
+# ---------------------------------------------------------------------------
+# Data model
+# ---------------------------------------------------------------------------
 
 @dataclass
 class Task:
-    text: str
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
+    text: str = ""
     done: bool = False
 
 
 @dataclass
-class ChecklistMessage:
-    message_id: int
+class Checklist:
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
+    chat_id: int = 0
     tasks: list[Task] = field(default_factory=list)
 
 
-checklists: dict[int, list[ChecklistMessage]] = {}
+checklists: dict[int, list[Checklist]] = {}
 
 
-def _render(cl: ChecklistMessage, page: int | None = None) -> tuple[str, InlineKeyboardMarkup]:
-    header = f"📋 <b>Чеклист #{page}</b>" if page else "📋 <b>Чеклист</b>"
-    lines = [header, ""]
-
-    buttons: list[list[InlineKeyboardButton]] = []
-    for i, task in enumerate(cl.tasks):
-        icon = "✅" if task.done else "⬜"
-        lines.append(f"{icon} {task.text}")
-        btn_label = f"{icon} {task.text}"
-        if len(btn_label) > 64:
-            btn_label = btn_label[:61] + "…"
-        buttons.append([
-            InlineKeyboardButton(btn_label, callback_data=f"t:{cl.message_id}:{i}")
-        ])
-
-    done = sum(1 for t in cl.tasks if t.done)
-    lines.append(f"\nВыполнено: {done}/{len(cl.tasks)}")
-
-    return "\n".join(lines), InlineKeyboardMarkup(buttons)
+def _get_or_create_current(chat_id: int) -> Checklist:
+    chat_lists = checklists.setdefault(chat_id, [])
+    if not chat_lists or len(chat_lists[-1].tasks) >= MAX_TASKS_PER_LIST:
+        cl = Checklist(chat_id=chat_id)
+        chat_lists.append(cl)
+    return chat_lists[-1]
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+def _serialize_checklists(chat_id: int) -> list[dict]:
+    return [
+        {
+            "id": cl.id,
+            "tasks": [
+                {"id": t.id, "text": t.text, "done": t.done}
+                for t in cl.tasks
+            ],
+        }
+        for cl in checklists.get(chat_id, [])
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Telegram init_data validation
+# ---------------------------------------------------------------------------
+
+def _validate_init_data(init_data: str, bot_token: str) -> dict | None:
+    parsed = dict(parse_qsl(init_data, keep_blank_values=True))
+    received_hash = parsed.pop("hash", None)
+    if not received_hash:
+        return None
+
+    data_check_string = "\n".join(
+        f"{k}={v}" for k, v in sorted(parsed.items())
+    )
+    secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
+    computed = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(computed, received_hash):
+        return None
+
+    user_data = parsed.get("user")
+    if user_data:
+        parsed["user"] = json.loads(user_data)
+    chat_data = parsed.get("chat")
+    if chat_data:
+        parsed["chat"] = json.loads(chat_data)
+    return parsed
+
+
+def _extract_chat_id(validated: dict) -> int | None:
+    if "chat" in validated and "id" in validated["chat"]:
+        return validated["chat"]["id"]
+    if "user" in validated and "id" in validated["user"]:
+        return validated["user"]["id"]
+    return None
+
+
+# ---------------------------------------------------------------------------
+# API handlers (aiohttp)
+# ---------------------------------------------------------------------------
+
+def _make_cors_headers() -> dict:
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-Telegram-Init-Data",
+    }
+
+
+def _json_response(data: dict, status: int = 200) -> web.Response:
+    return web.json_response(data, status=status, headers=_make_cors_headers())
+
+
+async def handle_options(request: web.Request) -> web.Response:
+    return web.Response(status=204, headers=_make_cors_headers())
+
+
+def _auth(request: web.Request) -> int | None:
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    if not init_data:
+        return None
+    bot_token = request.app["bot_token"]
+    validated = _validate_init_data(init_data, bot_token)
+    if not validated:
+        return None
+    return _extract_chat_id(validated)
+
+
+async def api_get_tasks(request: web.Request) -> web.Response:
+    chat_id = _auth(request)
+    if chat_id is None:
+        return _json_response({"error": "unauthorized"}, 401)
+    return _json_response({"lists": _serialize_checklists(chat_id)})
+
+
+async def api_add_task(request: web.Request) -> web.Response:
+    chat_id = _auth(request)
+    if chat_id is None:
+        return _json_response({"error": "unauthorized"}, 401)
+
+    body = await request.json()
+    text = (body.get("text") or "").strip()
+    if not text:
+        return _json_response({"error": "text required"}, 400)
+
+    cl = _get_or_create_current(chat_id)
+    task = Task(text=text)
+    cl.tasks.append(task)
+
+    return _json_response({
+        "task": {"id": task.id, "text": task.text, "done": task.done},
+        "list_id": cl.id,
+        "lists": _serialize_checklists(chat_id),
+    })
+
+
+async def api_toggle_task(request: web.Request) -> web.Response:
+    chat_id = _auth(request)
+    if chat_id is None:
+        return _json_response({"error": "unauthorized"}, 401)
+
+    body = await request.json()
+    task_id = body.get("task_id", "")
+
+    for cl in checklists.get(chat_id, []):
+        for task in cl.tasks:
+            if task.id == task_id:
+                task.done = not task.done
+                return _json_response({
+                    "task": {"id": task.id, "text": task.text, "done": task.done},
+                    "lists": _serialize_checklists(chat_id),
+                })
+
+    return _json_response({"error": "task not found"}, 404)
+
+
+async def api_delete_task(request: web.Request) -> web.Response:
+    chat_id = _auth(request)
+    if chat_id is None:
+        return _json_response({"error": "unauthorized"}, 401)
+
+    body = await request.json()
+    task_id = body.get("task_id", "")
+
+    for cl in checklists.get(chat_id, []):
+        for i, task in enumerate(cl.tasks):
+            if task.id == task_id:
+                cl.tasks.pop(i)
+                return _json_response({"lists": _serialize_checklists(chat_id)})
+
+    return _json_response({"error": "task not found"}, 404)
+
+
+# ---------------------------------------------------------------------------
+# Telegram bot handlers
+# ---------------------------------------------------------------------------
+
+async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    webapp_url = os.getenv("WEBAPP_URL", "")
+    if not webapp_url:
+        await update.message.reply_text(
+            "Привет! Я Helper_Bot 📋\n"
+            "WEBAPP_URL не настроен — Mini App недоступен."
+        )
+        return
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📋 Открыть чеклист", web_app=WebAppInfo(url=webapp_url))]
+    ])
     await update.message.reply_text(
         "Привет! Я Helper_Bot 📋\n\n"
-        "Отправь текстовое сообщение — я добавлю его как задачу в чеклист.\n"
-        "Нажимай кнопки, чтобы отмечать выполненное. "
-        "Любой участник чата может отмечать задачи.\n\n"
-        f"Лимит задач в одном списке: {MAX_TASKS_PER_MESSAGE}.\n"
-        "Когда лимит достигнут — создаётся новый список."
+        "Нажми кнопку ниже, чтобы открыть чеклист.\n"
+        "Добавляй задачи и отмечай выполненные — вместе!",
+        reply_markup=keyboard,
     )
 
 
-async def add_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_checklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    webapp_url = os.getenv("WEBAPP_URL", "")
+    if not webapp_url:
+        await update.message.reply_text("WEBAPP_URL не настроен.")
+        return
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📋 Открыть чеклист", web_app=WebAppInfo(url=webapp_url))]
+    ])
+    await update.message.reply_text(
+        "📋 Нажми кнопку, чтобы открыть чеклист:",
+        reply_markup=keyboard,
+    )
+
+
+async def echo_add_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.message.text:
         return
 
     chat_id = update.effective_chat.id
-    task_text = update.message.text.strip()
-    if not task_text:
+    text = update.message.text.strip()
+    if not text:
         return
 
-    chat_lists = checklists.setdefault(chat_id, [])
-    need_new = not chat_lists or len(chat_lists[-1].tasks) >= MAX_TASKS_PER_MESSAGE
+    cl = _get_or_create_current(chat_id)
+    task = Task(text=text)
+    cl.tasks.append(task)
 
-    if need_new:
-        page = len(chat_lists) + 1
-        cl = ChecklistMessage(message_id=0, tasks=[Task(text=task_text)])
-        chat_lists.append(cl)
-
-        text, kb = _render(cl, page if page > 1 else None)
-        sent = await update.message.reply_text(text, reply_markup=kb, parse_mode="HTML")
-        cl.message_id = sent.message_id
-    else:
-        cl = chat_lists[-1]
-        cl.tasks.append(Task(text=task_text))
-
-        page = len(chat_lists)
-        text, kb = _render(cl, page if page > 1 else None)
-        try:
-            await context.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=cl.message_id,
-                text=text,
-                reply_markup=kb,
-                parse_mode="HTML",
-            )
-        except Exception:
-            logger.exception("Failed to edit checklist message")
+    total = sum(len(c.tasks) for c in checklists.get(chat_id, []))
+    await update.message.reply_text(
+        f"✅ Задача добавлена (всего: {total}). "
+        "Открой /checklist чтобы посмотреть."
+    )
 
 
-async def toggle_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()
+# ---------------------------------------------------------------------------
+# Startup
+# ---------------------------------------------------------------------------
 
-    parts = (query.data or "").split(":")
-    if len(parts) != 3:
-        return
-
-    try:
-        msg_id, task_idx = int(parts[1]), int(parts[2])
-    except ValueError:
-        return
-
-    chat_id = update.effective_chat.id
-    chat_lists = checklists.get(chat_id, [])
-
-    for list_idx, cl in enumerate(chat_lists):
-        if cl.message_id != msg_id:
-            continue
-        if not (0 <= task_idx < len(cl.tasks)):
-            break
-
-        cl.tasks[task_idx].done = not cl.tasks[task_idx].done
-        page = list_idx + 1
-        text, kb = _render(cl, page if len(chat_lists) > 1 else None)
-        try:
-            await query.edit_message_text(text=text, reply_markup=kb, parse_mode="HTML")
-        except Exception:
-            logger.exception("Failed to update checklist")
-        break
+async def run_api_server(app: web.Application, host: str, port: int) -> None:
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()
+    logger.info("API server started on http://%s:%d", host, port)
 
 
 def main() -> None:
     load_dotenv()
     token = os.getenv("BOT_TOKEN")
-
     if not token:
         raise RuntimeError("BOT_TOKEN is not set. Put it in your .env file.")
 
-    application = Application.builder().token(token).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(toggle_task, pattern=r"^t:"))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_task))
+    api_port = int(os.getenv("API_PORT", "8080"))
 
+    # --- aiohttp API ---
+    api_app = web.Application()
+    api_app["bot_token"] = token
+
+    api_app.router.add_route("OPTIONS", "/api/tasks", handle_options)
+    api_app.router.add_route("OPTIONS", "/api/tasks/add", handle_options)
+    api_app.router.add_route("OPTIONS", "/api/tasks/toggle", handle_options)
+    api_app.router.add_route("OPTIONS", "/api/tasks/delete", handle_options)
+
+    api_app.router.add_get("/api/tasks", api_get_tasks)
+    api_app.router.add_post("/api/tasks/add", api_add_task)
+    api_app.router.add_post("/api/tasks/toggle", api_toggle_task)
+    api_app.router.add_post("/api/tasks/delete", api_delete_task)
+
+    # --- Telegram bot ---
+    application = Application.builder().token(token).build()
+    application.add_handler(CommandHandler("start", cmd_start))
+    application.add_handler(CommandHandler("checklist", cmd_checklist))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_add_task))
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(run_api_server(api_app, "0.0.0.0", api_port))
+    logger.info("Starting Telegram polling...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
