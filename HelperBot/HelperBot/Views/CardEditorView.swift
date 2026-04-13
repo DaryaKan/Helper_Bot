@@ -14,27 +14,40 @@ struct CardEditorView: View {
     @State private var mode: EditorMode = .text
     @State private var canvasView = PKCanvasView()
     @FocusState private var textFocused: Bool
-    @Namespace private var editorNamespace
 
     enum EditorMode { case text, draw }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                cardPreview
-                settingsPanel
-                modeBar
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    cardPreview
+                    settingsPanel
+                }
+                .padding(20)
             }
-            .padding(24)
+            .background(Color(hex: "#f5f1e8") ?? Color(.systemGroupedBackground))
+            .navigationTitle(existingTask != nil ? "Редактировать" : "Новая задача")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Отмена") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Сохранить", action: save)
+                        .fontWeight(.semibold)
+                }
+            }
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         }
-        .background(Color(.systemGroupedBackground))
         .onAppear(perform: loadState)
     }
 
     private var cardPreview: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color(hex: selectedColor) ?? Color(.systemGray6))
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
 
             if mode == .text {
                 TextEditor(text: $text)
@@ -44,114 +57,107 @@ struct CardEditorView: View {
                     .focused($textFocused)
             } else {
                 DrawingCanvasView(canvasView: $canvasView)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .padding(8)
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 300)
+        .frame(maxWidth: .infinity)
     }
 
     private var settingsPanel: some View {
-        GlassEffectContainer {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Цвет карточки")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                        .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Цвет карточки", systemImage: "paintpalette")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
 
-                    HStack(spacing: 10) {
-                        ForEach(CardColor.allCases, id: \.hex) { c in
-                            Circle()
-                                .fill(c.color)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color(.label), lineWidth: selectedColor == c.hex ? 2.5 : 0)
-                                )
-                                .onTapGesture {
-                                    withAnimation(.easeInOut(duration: 0.15)) {
-                                        selectedColor = c.hex
-                                    }
+                HStack(spacing: 12) {
+                    ForEach(CardColor.allCases, id: \.hex) { c in
+                        Circle()
+                            .fill(c.color)
+                            .frame(width: 36, height: 36)
+                            .shadow(color: c.color.opacity(0.4), radius: 4, y: 2)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(.label), lineWidth: selectedColor == c.hex ? 2.5 : 0)
+                                    .padding(-2)
+                            )
+                            .scaleEffect(selectedColor == c.hex ? 1.1 : 1)
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedColor = c.hex
                                 }
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Категория")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                        .foregroundStyle(.secondary)
-
-                    FlowLayout(spacing: 8) {
-                        ForEach(defaultCategories, id: \.self) { cat in
-                            Text(cat)
-                                .font(.system(size: 14, weight: .medium, design: .rounded))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 7)
-                                .glassEffect(
-                                    selectedCategory == cat
-                                        ? .regular.tint(.primary)
-                                        : .regular,
-                                    in: .capsule
-                                )
-                                .foregroundColor(selectedCategory == cat ? .white : .primary)
-                                .onTapGesture {
-                                    withAnimation(.easeInOut(duration: 0.15)) {
-                                        selectedCategory = selectedCategory == cat ? "" : cat
-                                    }
-                                }
-                        }
+                            }
                     }
                 }
             }
-            .padding(20)
-            .glassEffect(.regular, in: .rect(cornerRadius: 20))
+            .padding(18)
+
+            Divider().padding(.horizontal, 18)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Категория", systemImage: "tag")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                FlowLayout(spacing: 8) {
+                    ForEach(defaultCategories, id: \.self) { cat in
+                        Text(cat)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(selectedCategory == cat ? Color(.label) : Color(.systemGray6))
+                            .foregroundColor(selectedCategory == cat ? .white : .primary)
+                            .clipShape(Capsule())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedCategory = selectedCategory == cat ? "" : cat
+                                }
+                            }
+                    }
+                }
+            }
+            .padding(18)
+
+            Divider().padding(.horizontal, 18)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Режим", systemImage: "pencil.and.scribble")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 10) {
+                    modeButton(title: "Текст", icon: "textformat", isActive: mode == .text) {
+                        mode = .text; textFocused = true
+                    }
+                    modeButton(title: "Рисовать", icon: "pencil.tip", isActive: mode == .draw) {
+                        mode = .draw; textFocused = false
+                    }
+                }
+            }
+            .padding(18)
         }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+        )
     }
 
-    private var modeBar: some View {
-        GlassEffectContainer {
-            HStack(spacing: 0) {
-                Button { mode = .text; textFocused = true } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: "textformat")
-                            .font(.system(size: 16, weight: .medium))
-                        Text("Текст")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-                .glassEffect(mode == .text ? .regular.interactive() : .regular, in: .rect(cornerRadius: 16))
-
-                Button { mode = .draw; textFocused = false } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: "pencil.tip")
-                            .font(.system(size: 16, weight: .medium))
-                        Text("Рисовать")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-                .glassEffect(mode == .draw ? .regular.interactive() : .regular, in: .rect(cornerRadius: 16))
-
-                Button(action: save) {
-                    VStack(spacing: 3) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Сохранить")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-                .glassEffect(.regular.interactive().tint(.green.opacity(0.4)), in: .rect(cornerRadius: 16))
+    private func modeButton(title: String, icon: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(title)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(isActive ? Color(.label) : Color(.systemGray6))
+            .foregroundColor(isActive ? .white : .primary)
+            .clipShape(Capsule())
         }
     }
 
