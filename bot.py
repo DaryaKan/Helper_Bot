@@ -39,6 +39,7 @@ class Task:
     done: bool = False
     color: str = "#f4f4f4"
     category: str = ""
+    drawing: str = ""
 
 
 @dataclass
@@ -64,7 +65,7 @@ def _serialize_checklists(chat_id: int) -> list[dict]:
         {
             "id": cl.id,
             "tasks": [
-                {"id": t.id, "text": t.text, "done": t.done, "color": t.color, "category": t.category}
+                {"id": t.id, "text": t.text, "done": t.done, "color": t.color, "category": t.category, "drawing": t.drawing}
                 for t in cl.tasks
             ],
         }
@@ -158,13 +159,14 @@ async def api_add_task(request: web.Request) -> web.Response:
 
     color = (body.get("color") or "#f4f4f4").strip()
     category = (body.get("category") or "").strip()
+    drawing = body.get("drawing") or ""
 
     cl = _get_or_create_current(chat_id)
-    task = Task(text=text, color=color, category=category)
+    task = Task(text=text, color=color, category=category, drawing=drawing)
     cl.tasks.append(task)
 
     return _json_response({
-        "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
+        "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category, "drawing": task.drawing},
         "list_id": cl.id,
         "lists": _serialize_checklists(chat_id),
     })
@@ -183,7 +185,7 @@ async def api_toggle_task(request: web.Request) -> web.Response:
             if task.id == task_id:
                 task.done = not task.done
                 return _json_response({
-                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
+                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category, "drawing": task.drawing},
                     "lists": _serialize_checklists(chat_id),
                 })
 
@@ -207,8 +209,10 @@ async def api_update_task(request: web.Request) -> web.Response:
                     task.color = (body["color"] or "#f4f4f4").strip()
                 if "category" in body:
                     task.category = (body["category"] or "").strip()
+                if "drawing" in body:
+                    task.drawing = body["drawing"] or ""
                 return _json_response({
-                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
+                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category, "drawing": task.drawing},
                     "lists": _serialize_checklists(chat_id),
                 })
 
