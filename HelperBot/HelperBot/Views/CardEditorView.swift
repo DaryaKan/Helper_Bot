@@ -170,7 +170,6 @@ struct CardEditorView: View {
         } else if let card = defaultCard {
             selectedCategory = card.title
         }
-        if mode == .text { textFocused = true }
     }
 
     private func save() {
