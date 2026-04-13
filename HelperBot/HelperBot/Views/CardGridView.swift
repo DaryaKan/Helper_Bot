@@ -5,6 +5,7 @@ struct CardGridView: View {
     @State private var editorTask: TaskItem?
     @State private var editorDefaultCard: DefaultCard?
     @State private var showEditor = false
+    @Namespace private var cardNamespace
 
     private let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -14,15 +15,17 @@ struct CardGridView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
-                if store.allTasks.isEmpty {
-                    defaultGrid
-                } else {
-                    taskGrid
+                GlassEffectContainer {
+                    if store.allTasks.isEmpty {
+                        defaultGrid
+                    } else {
+                        taskGrid
+                    }
                 }
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
+                .padding(.bottom, 100)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
-            .padding(.bottom, 80)
 
             inputBar
         }
@@ -34,8 +37,9 @@ struct CardGridView: View {
 
     private var defaultGrid: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(defaultCards) { card in
+            ForEach(Array(defaultCards.enumerated()), id: \.element.id) { idx, card in
                 DefaultCardView(card: card)
+                    .glassEffectID("default-\(idx)", in: cardNamespace)
                     .onTapGesture {
                         editorDefaultCard = card
                         editorTask = nil
@@ -46,51 +50,56 @@ struct CardGridView: View {
     }
 
     private var taskGrid: some View {
-        ForEach(store.lists) { list in
-            if store.lists.count > 1 {
-                Text("Список #\(listIndex(list) + 1)")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .textCase(.uppercase)
-                    .tracking(0.8)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 8)
-            }
+        VStack(spacing: 10) {
+            ForEach(store.lists) { list in
+                if store.lists.count > 1 {
+                    Text("Список #\(listIndex(list) + 1)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .textCase(.uppercase)
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 8)
+                }
 
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(list.tasks) { task in
-                    CardView(task: task)
-                        .onTapGesture {
-                            editorTask = task
-                            editorDefaultCard = nil
-                            showEditor = true
-                        }
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(list.tasks) { task in
+                        CardView(task: task)
+                            .glassEffectID("task-\(task.id)", in: cardNamespace)
+                            .onTapGesture {
+                                withAnimation(.bouncy) {
+                                    editorTask = task
+                                    editorDefaultCard = nil
+                                    showEditor = true
+                                }
+                            }
+                    }
                 }
             }
         }
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            TextField("Добавить задачу...", text: $inputText)
-                .font(.system(size: 15, design: .rounded))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .onSubmit { submitQuickAdd() }
+        GlassEffectContainer {
+            HStack(spacing: 10) {
+                TextField("Добавить задачу...", text: $inputText)
+                    .font(.system(size: 15, design: .rounded))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .glassEffect(.regular, in: .capsule)
+                    .onSubmit { submitQuickAdd() }
 
-            Button(action: submitQuickAdd) {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 42, height: 42)
-                    .background(Color(.label))
-                    .clipShape(Circle())
+                Button(action: submitQuickAdd) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 42, height: 42)
+                }
+                .glassEffect(.regular.interactive().tint(.primary), in: .circle)
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
         .background(
             Rectangle()
                 .fill(.ultraThinMaterial)
@@ -112,17 +121,11 @@ struct CardGridView: View {
     @ViewBuilder
     private var editorSheet: some View {
         if let task = editorTask {
-            CardEditorView(
-                existingTask: task,
-                defaultCard: nil
-            )
-            .environmentObject(store)
+            CardEditorView(existingTask: task, defaultCard: nil)
+                .environmentObject(store)
         } else if let card = editorDefaultCard {
-            CardEditorView(
-                existingTask: nil,
-                defaultCard: card
-            )
-            .environmentObject(store)
+            CardEditorView(existingTask: nil, defaultCard: card)
+                .environmentObject(store)
         }
     }
 
