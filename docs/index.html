@@ -32,14 +32,12 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ---- Grid ---- */
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
 
-  /* ---- Card ---- */
   .card {
     background: var(--card-bg);
     border-radius: var(--card-radius);
@@ -53,14 +51,8 @@
     position: relative;
     overflow: hidden;
   }
-
-  .card:active {
-    transform: scale(0.96);
-  }
-
-  .card.done {
-    opacity: 0.55;
-  }
+  .card:active { transform: scale(0.96); }
+  .card.done { opacity: 0.55; }
 
   .card-text {
     font-size: 15px;
@@ -69,11 +61,7 @@
     word-break: break-word;
     flex: 1;
   }
-
-  .card.done .card-text {
-    text-decoration: line-through;
-    color: var(--hint);
-  }
+  .card.done .card-text { text-decoration: line-through; color: var(--hint); }
 
   .card-footer {
     display: flex;
@@ -84,279 +72,230 @@
   }
 
   .card-check {
-    width: 24px;
-    height: 24px;
+    width: 24px; height: 24px;
     border-radius: 50%;
     border: 2px solid #c7c7cc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
     flex-shrink: 0;
     background: transparent;
   }
+  .card.done .card-check { background: var(--btn); border-color: var(--btn); }
+  .card-check svg { width: 13px; height: 13px; opacity: 0; transition: opacity 0.2s; }
+  .card.done .card-check svg { opacity: 1; }
 
-  .card.done .card-check {
-    background: var(--btn);
-    border-color: var(--btn);
-  }
+  .card-category { font-size: 13px; color: var(--hint); font-weight: 400; margin-top: 2px; }
+  .card-emoji { font-size: 28px; margin-bottom: 8px; }
 
-  .card-check svg {
-    width: 13px;
-    height: 13px;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .card.done .card-check svg {
-    opacity: 1;
-  }
-
-  .card-delete {
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    opacity: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s;
-    border-radius: 50%;
-    color: var(--hint);
-  }
-
-  .card:hover .card-delete,
-  .card:active .card-delete {
-    opacity: 0.5;
-  }
-
-  .card-delete:active {
-    opacity: 0.9 !important;
-    color: #ff3b30;
-  }
-
-  .card-delete svg { width: 14px; height: 14px; }
-
-  /* ---- Default category cards ---- */
-  .card-category {
-    font-size: 13px;
-    color: var(--hint);
-    font-weight: 400;
-    margin-top: 2px;
-  }
-
-  .card-emoji {
-    font-size: 28px;
-    margin-bottom: 8px;
-  }
-
-  /* ---- List divider ---- */
   .list-divider {
     padding: 14px 4px 6px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px;
     color: var(--hint);
   }
 
   /* ---- Bottom bar (glass) ---- */
   .bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
     padding: 10px 12px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     z-index: 20;
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255,255,255,0.72);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     backdrop-filter: blur(20px) saturate(180%);
-    border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+    border-top: 0.5px solid rgba(0,0,0,0.08);
+  }
+  .bottom-bar input {
+    flex: 1; padding: 11px 16px;
+    border: none; border-radius: 22px;
+    font-size: 15px; font-family: inherit;
+    background: rgba(118,118,128,0.12);
+    color: var(--text); outline: none;
+    transition: background 0.2s;
+  }
+  .bottom-bar input:focus { background: rgba(118,118,128,0.18); }
+  .bottom-bar input::placeholder { color: var(--hint); }
+
+  .add-btn {
+    width: 42px; height: 42px;
+    border: none; border-radius: 50%;
+    background: var(--btn); color: var(--btn-text);
+    font-size: 22px; font-weight: 300;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.15s;
+    -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+  }
+  .add-btn:active { transform: scale(0.9); }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed; top: 16px; left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: rgba(255,59,48,0.92);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    color: #fff; padding: 10px 20px; border-radius: 14px;
+    font-size: 14px; font-weight: 500; z-index: 100;
+    transition: transform 0.3s ease; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ---- Editor overlay ---- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; flex-direction: column; align-items: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+    background: rgba(0,0,0,0.35);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    overflow-y: auto;
+    padding: 32px 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  .editor-close {
+    position: absolute; top: 12px; right: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.25);
+    color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .bottom-bar input {
-    flex: 1;
-    padding: 11px 16px;
-    border: none;
-    border-radius: 22px;
-    font-size: 15px;
-    font-family: inherit;
-    background: rgba(118, 118, 128, 0.12);
-    color: var(--text);
-    outline: none;
+  /* ---- Editor card (top) ---- */
+  .editor-card {
+    width: 100%; max-width: 300px;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex; flex-direction: column;
+    position: relative;
+    flex-shrink: 0;
     transition: background 0.2s;
   }
 
-  .bottom-bar input:focus {
-    background: rgba(118, 118, 128, 0.18);
+  .editor-card-input {
+    width: 100%; flex: 1;
+    border: none; background: transparent;
+    font-family: inherit;
+    font-size: 16px; font-weight: 500;
+    color: var(--text); outline: none;
+    resize: none; line-height: 1.4;
+    cursor: text;
+  }
+  .editor-card-input::placeholder { color: rgba(0,0,0,0.25); }
+
+  .editor-canvas-wrap {
+    position: absolute; inset: 0;
+    border-radius: 20px; overflow: hidden;
+    display: none;
+  }
+  .editor-canvas-wrap.active { display: block; }
+
+  .editor-canvas {
+    width: 100%; height: 100%;
+    cursor: crosshair;
+    touch-action: none;
   }
 
-  .bottom-bar input::placeholder {
-    color: var(--hint);
-  }
-
-  .add-btn {
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 50%;
-    background: var(--btn);
-    color: var(--btn-text);
-    font-size: 22px;
-    font-weight: 300;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.15s;
-    -webkit-tap-highlight-color: transparent;
+  /* ---- Settings panel ---- */
+  .editor-panel {
+    width: 100%; max-width: 300px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 16px;
     flex-shrink: 0;
   }
 
-  .add-btn:active { transform: scale(0.9); }
+  .panel-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--hint);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .panel-label:not(:first-child) { margin-top: 18px; }
 
-  /* ---- Error toast ---- */
-  .toast {
-    position: fixed;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-60px);
-    background: rgba(255, 59, 48, 0.92);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 100;
-    transition: transform 0.3s ease;
-    pointer-events: none;
+  .color-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
   }
 
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* ---- Preview overlay ---- */
-  .overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-
-  .overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .overlay-bg {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-  }
-
-  .preview {
+  .color-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
     position: relative;
-    width: calc(100vw - 48px);
-    max-width: 320px;
-    aspect-ratio: 1;
-    background: var(--card-bg);
-    border-radius: 24px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    transform: scale(0.85);
-    transition: transform 0.25s ease;
+  }
+  .color-dot:active { transform: scale(0.88); }
+  .color-dot.selected { border-color: var(--btn); }
+
+  .category-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
   }
 
-  .overlay.open .preview {
-    transform: scale(1);
+  .cat-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #e0e0e0;
+    background: #fff;
+    font-size: 14px; font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cat-chip:active { transform: scale(0.95); }
+  .cat-chip.selected { background: var(--btn); color: var(--btn-text); border-color: var(--btn); }
+
+  /* ---- Mode toolbar ---- */
+  .mode-bar {
+    display: flex; gap: 0;
+    width: 100%; max-width: 300px;
+    margin-top: 12px;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
   }
 
-  .preview.done {
-    opacity: 0.7;
-  }
-
-  .preview-text {
-    font-size: 22px;
-    font-weight: 600;
-    line-height: 1.3;
-    word-break: break-word;
+  .mode-btn {
     flex: 1;
-  }
-
-  .preview.done .preview-text {
-    text-decoration: line-through;
+    padding: 12px 0;
+    border: none; background: transparent;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
     color: var(--hint);
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
+  .mode-btn svg { width: 20px; height: 20px; }
+  .mode-btn.active { color: var(--btn); background: rgba(0,0,0,0.04); }
+  .mode-btn:active { opacity: 0.7; }
 
-  .preview-status {
-    font-size: 14px;
-    color: var(--hint);
-    margin-top: 4px;
-  }
-
-  .preview-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: auto;
-    padding-top: 16px;
-  }
-
-  .preview-btn {
+  .mode-btn-save {
     flex: 1;
     padding: 12px 0;
     border: none;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.12s, opacity 0.12s;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .preview-btn:active {
-    transform: scale(0.96);
-    opacity: 0.8;
-  }
-
-  .preview-btn-toggle {
     background: var(--btn);
     color: var(--btn-text);
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
   }
-
-  .preview-btn-delete {
-    background: rgba(255, 59, 48, 0.12);
-    color: #ff3b30;
-  }
-
-  /* ---- Default card preview ---- */
-  .preview-emoji {
-    font-size: 48px;
-    margin-bottom: 12px;
-  }
-
-  .preview-category {
-    font-size: 15px;
-    color: var(--hint);
-    margin-top: 4px;
-  }
+  .mode-btn-save svg { width: 20px; height: 20px; }
+  .mode-btn-save:active { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -364,9 +303,38 @@
 <div class="toast" id="toast"></div>
 <div id="content"></div>
 
-<div class="overlay" id="overlay" onclick="closePreview(event)">
-  <div class="overlay-bg"></div>
-  <div class="preview" id="preview" onclick="event.stopPropagation()"></div>
+<div class="overlay" id="overlay">
+  <button class="editor-close" onclick="closeEditor()">✕</button>
+
+  <div class="editor-card" id="editorCard">
+    <textarea class="editor-card-input" id="editorInput" placeholder="Добавь текст..." rows="1"></textarea>
+    <div class="editor-canvas-wrap" id="canvasWrap">
+      <canvas class="editor-canvas" id="drawCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="editor-panel">
+    <div class="panel-label">Цвет карточки</div>
+    <div class="color-row" id="colorRow"></div>
+
+    <div class="panel-label">Категория</div>
+    <div class="category-row" id="categoryRow"></div>
+  </div>
+
+  <div class="mode-bar">
+    <button class="mode-btn active" id="modeText" onclick="setMode('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V4h16v3"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+      Текст
+    </button>
+    <button class="mode-btn" id="modeDraw" onclick="setMode('draw')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+      Рисовать
+    </button>
+    <button class="mode-btn-save" onclick="saveEditor()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Сохранить
+    </button>
+  </div>
 </div>
 
 <div class="bottom-bar">
@@ -382,12 +350,27 @@ tg.expand();
 const API_BASE = getApiBase();
 const initData = tg.initData || "";
 
+const CARD_COLORS = [
+  { name: "gray",   hex: "#f4f4f4" },
+  { name: "yellow", hex: "#f5e6b8" },
+  { name: "green",  hex: "#c8e6c9" },
+  { name: "blue",   hex: "#bbdefb" },
+  { name: "pink",   hex: "#f4d1d1" },
+  { name: "purple", hex: "#e1bee7" },
+];
+
+const CATEGORIES = ["Покупки", "Заметки", "Работа", "Книги", "Личное"];
+
 const DEFAULT_CARDS = [
   { emoji: "🛒", title: "Покупки" },
   { emoji: "📝", title: "Заметки" },
   { emoji: "💼", title: "Работа" },
   { emoji: "📚", title: "Книги" },
 ];
+
+let allLists = [];
+let editorState = { taskId: null, color: "#f4f4f4", category: "", mode: "text" };
+let drawing = false;
 
 function getApiBase() {
   const params = new URLSearchParams(window.location.search);
@@ -396,22 +379,16 @@ function getApiBase() {
 }
 
 function authHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "X-Telegram-Init-Data": initData,
-  };
+  return { "Content-Type": "application/json", "X-Telegram-Init-Data": initData };
 }
 
-let allLists = [];
-
+// ---- API ----
 async function fetchTasks() {
   if (!API_BASE) { render(); return; }
   try {
     const res = await fetch(API_BASE + "/api/tasks", { headers: authHeaders() });
     const data = await res.json();
-    if (!data.error) {
-      allLists = data.lists || [];
-    }
+    if (!data.error) allLists = data.lists || [];
   } catch (e) {}
   render();
 }
@@ -420,12 +397,10 @@ async function addTask() {
   const input = document.getElementById("taskInput");
   const text = input.value.trim();
   if (!text || !API_BASE) return;
-
   input.value = "";
   try {
     const res = await fetch(API_BASE + "/api/tasks/add", {
-      method: "POST",
-      headers: authHeaders(),
+      method: "POST", headers: authHeaders(),
       body: JSON.stringify({ text }),
     });
     const data = await res.json();
@@ -433,27 +408,21 @@ async function addTask() {
     allLists = data.lists || [];
     render();
     try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
-  } catch (e) {
-    showToast("Ошибка при добавлении");
-  }
+  } catch (e) { showToast("Ошибка при добавлении"); }
 }
 
 async function toggleTask(taskId) {
   if (!API_BASE) return;
   try {
     const res = await fetch(API_BASE + "/api/tasks/toggle", {
-      method: "POST",
-      headers: authHeaders(),
+      method: "POST", headers: authHeaders(),
       body: JSON.stringify({ task_id: taskId }),
     });
     const data = await res.json();
     if (data.error) { showToast(data.error); return; }
     allLists = data.lists || [];
     render();
-    try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
-  } catch (e) {
-    showToast("Ошибка при обновлении");
-  }
+  } catch (e) { showToast("Ошибка"); }
 }
 
 async function deleteTask(e, taskId) {
@@ -461,77 +430,181 @@ async function deleteTask(e, taskId) {
   if (!API_BASE) return;
   try {
     const res = await fetch(API_BASE + "/api/tasks/delete", {
-      method: "POST",
-      headers: authHeaders(),
+      method: "POST", headers: authHeaders(),
       body: JSON.stringify({ task_id: taskId }),
     });
     const data = await res.json();
     if (data.error) { showToast(data.error); return; }
     allLists = data.lists || [];
     render();
-    try { tg.HapticFeedback.impactOccurred("medium"); } catch(e2) {}
-  } catch (e2) {
-    showToast("Ошибка при удалении");
-  }
+  } catch (e2) { showToast("Ошибка"); }
 }
 
-function openPreview(taskId) {
+// ---- Editor ----
+function openEditor(taskId) {
   let task = null;
   allLists.forEach(l => l.tasks.forEach(t => { if (t.id === taskId) task = t; }));
   if (!task) return;
 
-  const preview = document.getElementById("preview");
-  const doneClass = task.done ? " done" : "";
-  const toggleLabel = task.done ? "Вернуть" : "Выполнено";
-
-  preview.className = "preview" + doneClass;
-  preview.innerHTML = `
-    <div class="preview-text">${escapeHtml(task.text)}</div>
-    <div class="preview-status">${task.done ? "✅ Выполнено" : "⬜ В процессе"}</div>
-    <div class="preview-actions">
-      <button class="preview-btn preview-btn-toggle" onclick="previewToggle('${task.id}')">${toggleLabel}</button>
-      <button class="preview-btn preview-btn-delete" onclick="previewDelete('${task.id}')">Удалить</button>
-    </div>`;
-
+  editorState = { taskId, color: "#f4f4f4", category: "", mode: "text" };
+  document.getElementById("editorInput").value = task.text;
+  initEditorPanel();
+  setMode("text");
+  document.getElementById("editorCard").style.background = editorState.color;
   document.getElementById("overlay").classList.add("open");
+  clearCanvas();
+  setTimeout(() => document.getElementById("editorInput").focus(), 300);
   try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
 }
 
-function openDefaultPreview(idx) {
+function openDefaultEditor(idx) {
   const card = DEFAULT_CARDS[idx];
-  const preview = document.getElementById("preview");
-
-  preview.className = "preview";
-  preview.innerHTML = `
-    <div class="preview-emoji">${card.emoji}</div>
-    <div class="preview-text">${card.title}</div>
-    <div class="preview-category">0 задач</div>`;
-
+  editorState = { taskId: null, color: "#f4f4f4", category: card.title, mode: "text" };
+  document.getElementById("editorInput").value = "";
+  initEditorPanel();
+  setMode("text");
+  document.getElementById("editorCard").style.background = editorState.color;
   document.getElementById("overlay").classList.add("open");
+  clearCanvas();
+  setTimeout(() => document.getElementById("editorInput").focus(), 300);
   try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
 }
 
-function closePreview(e) {
-  if (e && e.target.closest(".preview")) return;
+function closeEditor() {
   document.getElementById("overlay").classList.remove("open");
 }
 
-async function previewToggle(taskId) {
-  await toggleTask(taskId);
-  let task = null;
-  allLists.forEach(l => l.tasks.forEach(t => { if (t.id === taskId) task = t; }));
-  if (task) openPreview(taskId);
-  else closePreview();
+async function saveEditor() {
+  const text = document.getElementById("editorInput").value.trim();
+  if (!text) { showToast("Введи текст задачи"); return; }
+
+  if (editorState.taskId) {
+    closeEditor();
+    return;
+  }
+
+  if (!API_BASE) { closeEditor(); return; }
+  try {
+    const res = await fetch(API_BASE + "/api/tasks/add", {
+      method: "POST", headers: authHeaders(),
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error); return; }
+    allLists = data.lists || [];
+    render();
+    closeEditor();
+    try { tg.HapticFeedback.impactOccurred("medium"); } catch(e) {}
+  } catch (e) { showToast("Ошибка при сохранении"); }
 }
 
-async function previewDelete(taskId) {
-  closePreview();
-  await deleteTask(new Event("click"), taskId);
+function initEditorPanel() {
+  const colorRow = document.getElementById("colorRow");
+  colorRow.innerHTML = CARD_COLORS.map(c =>
+    `<div class="color-dot${c.hex === editorState.color ? ' selected' : ''}"
+          style="background:${c.hex}"
+          onclick="pickColor('${c.hex}')"></div>`
+  ).join("");
+
+  const catRow = document.getElementById("categoryRow");
+  catRow.innerHTML = CATEGORIES.map(c =>
+    `<div class="cat-chip${c === editorState.category ? ' selected' : ''}"
+          onclick="pickCategory('${escapeHtml(c)}')">${c}</div>`
+  ).join("");
 }
 
+function pickColor(hex) {
+  editorState.color = hex;
+  document.getElementById("editorCard").style.background = hex;
+  initEditorPanel();
+  try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+}
+
+function pickCategory(cat) {
+  editorState.category = editorState.category === cat ? "" : cat;
+  initEditorPanel();
+  try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+}
+
+function setMode(mode) {
+  editorState.mode = mode;
+  document.getElementById("modeText").classList.toggle("active", mode === "text");
+  document.getElementById("modeDraw").classList.toggle("active", mode === "draw");
+
+  const canvasWrap = document.getElementById("canvasWrap");
+  const input = document.getElementById("editorInput");
+
+  if (mode === "draw") {
+    canvasWrap.classList.add("active");
+    input.style.display = "none";
+    resizeCanvas();
+  } else {
+    canvasWrap.classList.remove("active");
+    input.style.display = "";
+    input.focus();
+  }
+}
+
+// ---- Drawing ----
+function resizeCanvas() {
+  const canvas = document.getElementById("drawCanvas");
+  const wrap = document.getElementById("canvasWrap");
+  const rect = wrap.getBoundingClientRect();
+  canvas.width = rect.width * (window.devicePixelRatio || 1);
+  canvas.height = rect.height * (window.devicePixelRatio || 1);
+  canvas.style.width = rect.width + "px";
+  canvas.style.height = rect.height + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#1a1a1a";
+}
+
+function clearCanvas() {
+  const canvas = document.getElementById("drawCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function getDrawPos(e) {
+  const canvas = document.getElementById("drawCanvas");
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+function drawStart(e) {
+  if (editorState.mode !== "draw") return;
+  drawing = true;
+  const ctx = document.getElementById("drawCanvas").getContext("2d");
+  const pos = getDrawPos(e);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+  e.preventDefault();
+}
+
+function drawMove(e) {
+  if (!drawing) return;
+  const ctx = document.getElementById("drawCanvas").getContext("2d");
+  const pos = getDrawPos(e);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  e.preventDefault();
+}
+
+function drawEnd() { drawing = false; }
+
+const canvas = document.getElementById("drawCanvas");
+canvas.addEventListener("pointerdown", drawStart);
+canvas.addEventListener("pointermove", drawMove);
+canvas.addEventListener("pointerup", drawEnd);
+canvas.addEventListener("pointerleave", drawEnd);
+
+// ---- Render ----
 function render() {
   const content = document.getElementById("content");
-
   let totalTasks = 0;
   allLists.forEach(l => l.tasks.forEach(() => totalTasks++));
 
@@ -539,7 +612,7 @@ function render() {
     let html = '<div class="grid">';
     DEFAULT_CARDS.forEach((card, idx) => {
       html += `
-        <div class="card" onclick="openDefaultPreview(${idx})">
+        <div class="card" onclick="openDefaultEditor(${idx})">
           <div class="card-emoji">${card.emoji}</div>
           <div class="card-text">${card.title}</div>
           <div class="card-category">0 задач</div>
@@ -552,30 +625,24 @@ function render() {
 
   const showDividers = allLists.length > 1;
   let html = "";
-
   allLists.forEach((list, listIdx) => {
     if (list.tasks.length === 0) return;
-    if (showDividers) {
-      html += `<div class="list-divider">Список #${listIdx + 1}</div>`;
-    }
+    if (showDividers) html += `<div class="list-divider">Список #${listIdx+1}</div>`;
     html += '<div class="grid">';
     list.tasks.forEach(task => {
       const doneClass = task.done ? " done" : "";
       html += `
-        <div class="card${doneClass}" onclick="openPreview('${task.id}')">
+        <div class="card${doneClass}" onclick="openEditor('${task.id}')">
           <div class="card-text">${escapeHtml(task.text)}</div>
           <div class="card-footer">
             <div class="card-check">
-              <svg viewBox="0 0 14 14" fill="none">
-                <path d="M2 7l3.5 3.5L12 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
           </div>
         </div>`;
     });
     html += '</div>';
   });
-
   content.innerHTML = html;
 }
 
@@ -598,6 +665,5 @@ document.getElementById("taskInput").addEventListener("keydown", e => {
 
 fetchTasks();
 </script>
-
 </body>
 </html>
