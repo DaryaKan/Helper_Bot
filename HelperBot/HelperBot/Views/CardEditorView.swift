@@ -14,6 +14,7 @@ struct CardEditorView: View {
     @State private var mode: EditorMode = .text
     @State private var canvasView = PKCanvasView()
     @FocusState private var textFocused: Bool
+    @Namespace private var editorNamespace
 
     enum EditorMode { case text, draw }
 
@@ -32,7 +33,7 @@ struct CardEditorView: View {
 
     private var cardPreview: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color(hex: selectedColor) ?? Color(.systemGray6))
 
             if mode == .text {
@@ -51,108 +52,106 @@ struct CardEditorView: View {
     }
 
     private var settingsPanel: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Цвет карточки")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .textCase(.uppercase)
-                    .tracking(0.5)
-                    .foregroundStyle(.secondary)
+        GlassEffectContainer {
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Цвет карточки")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                        .foregroundStyle(.secondary)
 
-                HStack(spacing: 10) {
-                    ForEach(CardColor.allCases, id: \.hex) { c in
-                        Circle()
-                            .fill(c.color)
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(.label), lineWidth: selectedColor == c.hex ? 2.5 : 0)
-                            )
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.15)) {
-                                    selectedColor = c.hex
+                    HStack(spacing: 10) {
+                        ForEach(CardColor.allCases, id: \.hex) { c in
+                            Circle()
+                                .fill(c.color)
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(.label), lineWidth: selectedColor == c.hex ? 2.5 : 0)
+                                )
+                                .onTapGesture {
+                                    withAnimation(.easeInOut(duration: 0.15)) {
+                                        selectedColor = c.hex
+                                    }
                                 }
-                            }
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Категория")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                        .foregroundStyle(.secondary)
+
+                    FlowLayout(spacing: 8) {
+                        ForEach(defaultCategories, id: \.self) { cat in
+                            Text(cat)
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 7)
+                                .glassEffect(
+                                    selectedCategory == cat
+                                        ? .regular.tint(.primary)
+                                        : .regular,
+                                    in: .capsule
+                                )
+                                .foregroundColor(selectedCategory == cat ? .white : .primary)
+                                .onTapGesture {
+                                    withAnimation(.easeInOut(duration: 0.15)) {
+                                        selectedCategory = selectedCategory == cat ? "" : cat
+                                    }
+                                }
+                        }
                     }
                 }
             }
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Категория")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .textCase(.uppercase)
-                    .tracking(0.5)
-                    .foregroundStyle(.secondary)
-
-                FlowLayout(spacing: 8) {
-                    ForEach(defaultCategories, id: \.self) { cat in
-                        Text(cat)
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(selectedCategory == cat ? Color(.label) : Color(.systemBackground))
-                            .foregroundColor(selectedCategory == cat ? .white : .primary)
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(selectedCategory == cat ? Color.clear : Color(.systemGray4), lineWidth: 1.5)
-                            )
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.15)) {
-                                    selectedCategory = selectedCategory == cat ? "" : cat
-                                }
-                            }
-                    }
-                }
-            }
+            .padding(20)
+            .glassEffect(.regular, in: .rect(cornerRadius: 20))
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-        )
     }
 
     private var modeBar: some View {
-        HStack(spacing: 0) {
-            modeButton(title: "Текст", icon: "textformat", isActive: mode == .text) {
-                mode = .text
-                textFocused = true
-            }
-
-            modeButton(title: "Рисовать", icon: "pencil.tip", isActive: mode == .draw) {
-                mode = .draw
-                textFocused = false
-            }
-
-            Button(action: save) {
-                VStack(spacing: 3) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("Сохранить")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+        GlassEffectContainer {
+            HStack(spacing: 0) {
+                Button { mode = .text; textFocused = true } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "textformat")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("Текст")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .foregroundColor(.white)
-                .background(Color(.label))
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
+                .glassEffect(mode == .text ? .regular.interactive() : .regular, in: .rect(cornerRadius: 16))
 
-    private func modeButton(title: String, icon: String, isActive: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                Text(title)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                Button { mode = .draw; textFocused = false } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "pencil.tip")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("Рисовать")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+                .glassEffect(mode == .draw ? .regular.interactive() : .regular, in: .rect(cornerRadius: 16))
+
+                Button(action: save) {
+                    VStack(spacing: 3) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Сохранить")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+                .glassEffect(.regular.interactive().tint(.green.opacity(0.4)), in: .rect(cornerRadius: 16))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .foregroundColor(isActive ? .primary : .secondary)
-            .background(isActive ? Color(.systemGray6) : Color(.systemBackground))
         }
     }
 
@@ -161,22 +160,17 @@ struct CardEditorView: View {
             text = task.text == "(рисунок)" ? "" : task.text
             selectedColor = task.color
             selectedCategory = task.category
-            if !task.drawing.isEmpty {
-                mode = .draw
-            }
+            if !task.drawing.isEmpty { mode = .draw }
         } else if let card = defaultCard {
             selectedCategory = card.title
         }
-        if mode == .text {
-            textFocused = true
-        }
+        if mode == .text { textFocused = true }
     }
 
     private func save() {
         let finalText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let drawingData = canvasView.drawing.strokes.isEmpty ? "" : canvasView.toBase64PNG(size: CGSize(width: 300, height: 300))
         let saveText = finalText.isEmpty && !drawingData.isEmpty ? "(рисунок)" : finalText
-
         guard !saveText.isEmpty else { return }
 
         Task {
@@ -194,8 +188,7 @@ struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = arrange(proposal: proposal, subviews: subviews)
-        return result.size
+        arrange(proposal: proposal, subviews: subviews).size
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
@@ -216,9 +209,7 @@ struct FlowLayout: Layout {
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
             if x + size.width > maxWidth && x > 0 {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
+                x = 0; y += rowHeight + spacing; rowHeight = 0
             }
             positions.append(CGPoint(x: x, y: y))
             rowHeight = max(rowHeight, size.height)

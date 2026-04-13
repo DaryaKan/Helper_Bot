@@ -5,7 +5,7 @@ struct CardView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(task.uiColor)
 
             if let img = drawingImage {
@@ -31,21 +31,11 @@ struct CardView: View {
                 Spacer()
 
                 HStack {
-                    ZStack {
-                        Circle()
-                            .stroke(task.done ? Color.clear : Color(.systemGray4), lineWidth: 2)
-                            .frame(width: 24, height: 24)
-
-                        if task.done {
-                            Circle()
-                                .fill(Color(.label))
-                                .frame(width: 24, height: 24)
-
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
+                    Image(systemName: task.done ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(task.done ? .primary : .secondary)
+                        .padding(4)
+                        .glassEffect(.regular, in: .circle)
 
                     Spacer()
                 }
@@ -53,7 +43,7 @@ struct CardView: View {
             .padding(14)
         }
         .aspectRatio(1, contentMode: .fit)
-        .opacity(task.done ? 0.55 : 1)
+        .opacity(task.done ? 0.6 : 1)
     }
 
     private var drawingImage: UIImage? {
@@ -70,7 +60,7 @@ struct DefaultCardView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(hex: "#f4f4f4") ?? .gray)
 
             VStack(alignment: .leading, spacing: 4) {
