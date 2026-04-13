@@ -17,6 +17,7 @@
 		A10008 /* CardEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008; };
 		A10009 /* DrawingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20009; };
 		A10010 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20010; };
+		A10012 /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20012; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		A20008 /* CardEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardEditorView.swift; sourceTree = "<group>"; };
 		A20009 /* DrawingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvasView.swift; sourceTree = "<group>"; };
 		A20010 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A20012 /* CategoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDetailView.swift; sourceTree = "<group>"; };
 		A30001 /* HelperBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelperBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -79,6 +81,7 @@
 				A20007 /* CardView.swift */,
 				A20008 /* CardEditorView.swift */,
 				A20009 /* DrawingCanvasView.swift */,
+				A20012 /* CategoryDetailView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -147,6 +150,7 @@
 				A10008,
 				A10009,
 				A10010,
+				A10012,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
