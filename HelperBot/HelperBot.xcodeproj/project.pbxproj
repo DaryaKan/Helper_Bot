@@ -12,6 +12,7 @@
 		A10003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20003; };
 		A10004 /* TaskModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20004; };
 		A10005 /* ChecklistStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20005; };
+		A10013 /* LocalTaskStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013; };
 		A10006 /* CardGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20006; };
 		A10007 /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20007; };
 		A10008 /* CardEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008; };
@@ -26,6 +27,7 @@
 		A20003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20004 /* TaskModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskModel.swift; sourceTree = "<group>"; };
 		A20005 /* ChecklistStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistStore.swift; sourceTree = "<group>"; };
+		A20013 /* LocalTaskStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalTaskStore.swift; sourceTree = "<group>"; };
 		A20006 /* CardGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGridView.swift; sourceTree = "<group>"; };
 		A20007 /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
 		A20008 /* CardEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardEditorView.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 			children = (
 				A20004 /* TaskModel.swift */,
 				A20005 /* ChecklistStore.swift */,
+				A20013 /* LocalTaskStore.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -145,6 +148,7 @@
 				A10002,
 				A10004,
 				A10005,
+				A10013,
 				A10006,
 				A10007,
 				A10008,

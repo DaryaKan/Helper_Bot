@@ -11,6 +11,11 @@ final class APIClient {
         UserDefaults.standard.string(forKey: "telegram_init_data") ?? ""
     }
 
+    /// Native app build has no WebApp `initData`; the Python API requires a valid `X-Telegram-Init-Data` header.
+    var isLocalOnlyMode: Bool {
+        initData.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
 
