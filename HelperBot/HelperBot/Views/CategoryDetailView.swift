@@ -9,7 +9,10 @@ struct CategoryDetailView: View {
     @State private var editorTask: TaskItem?
 
     var tasks: [TaskItem] {
-        store.allTasks.filter { $0.category == category }
+        store.allTasks.filter { task in
+            let normalized = task.category.isEmpty ? "Без категории" : task.category
+            return normalized == category
+        }
     }
 
     var body: some View {
