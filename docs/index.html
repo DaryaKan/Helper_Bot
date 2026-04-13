@@ -446,7 +446,7 @@ function openEditor(taskId) {
   allLists.forEach(l => l.tasks.forEach(t => { if (t.id === taskId) task = t; }));
   if (!task) return;
 
-  editorState = { taskId, color: "#f4f4f4", category: "", mode: "text" };
+  editorState = { taskId, color: task.color || "#f4f4f4", category: task.category || "", mode: "text" };
   document.getElementById("editorInput").value = task.text;
   initEditorPanel();
   setMode("text");
@@ -487,7 +487,7 @@ async function saveEditor() {
   try {
     const res = await fetch(API_BASE + "/api/tasks/add", {
       method: "POST", headers: authHeaders(),
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, color: editorState.color, category: editorState.category }),
     });
     const data = await res.json();
     if (data.error) { showToast(data.error); return; }
@@ -631,9 +631,12 @@ function render() {
     html += '<div class="grid">';
     list.tasks.forEach(task => {
       const doneClass = task.done ? " done" : "";
+      const bg = task.color || "#f4f4f4";
+      const cat = task.category ? `<div class="card-category">${escapeHtml(task.category)}</div>` : "";
       html += `
-        <div class="card${doneClass}" onclick="openEditor('${task.id}')">
+        <div class="card${doneClass}" style="background:${bg}" onclick="openEditor('${task.id}')">
           <div class="card-text">${escapeHtml(task.text)}</div>
+          ${cat}
           <div class="card-footer">
             <div class="card-check">
               <svg viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

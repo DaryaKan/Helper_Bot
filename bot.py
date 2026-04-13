@@ -37,6 +37,8 @@ class Task:
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     text: str = ""
     done: bool = False
+    color: str = "#f4f4f4"
+    category: str = ""
 
 
 @dataclass
@@ -62,7 +64,7 @@ def _serialize_checklists(chat_id: int) -> list[dict]:
         {
             "id": cl.id,
             "tasks": [
-                {"id": t.id, "text": t.text, "done": t.done}
+                {"id": t.id, "text": t.text, "done": t.done, "color": t.color, "category": t.category}
                 for t in cl.tasks
             ],
         }
@@ -154,12 +156,15 @@ async def api_add_task(request: web.Request) -> web.Response:
     if not text:
         return _json_response({"error": "text required"}, 400)
 
+    color = (body.get("color") or "#f4f4f4").strip()
+    category = (body.get("category") or "").strip()
+
     cl = _get_or_create_current(chat_id)
-    task = Task(text=text)
+    task = Task(text=text, color=color, category=category)
     cl.tasks.append(task)
 
     return _json_response({
-        "task": {"id": task.id, "text": task.text, "done": task.done},
+        "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
         "list_id": cl.id,
         "lists": _serialize_checklists(chat_id),
     })
@@ -178,7 +183,7 @@ async def api_toggle_task(request: web.Request) -> web.Response:
             if task.id == task_id:
                 task.done = not task.done
                 return _json_response({
-                    "task": {"id": task.id, "text": task.text, "done": task.done},
+                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
                     "lists": _serialize_checklists(chat_id),
                 })
 
