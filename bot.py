@@ -190,6 +190,31 @@ async def api_toggle_task(request: web.Request) -> web.Response:
     return _json_response({"error": "task not found"}, 404)
 
 
+async def api_update_task(request: web.Request) -> web.Response:
+    chat_id = _auth(request)
+    if chat_id is None:
+        return _json_response({"error": "unauthorized"}, 401)
+
+    body = await request.json()
+    task_id = body.get("task_id", "")
+
+    for cl in checklists.get(chat_id, []):
+        for task in cl.tasks:
+            if task.id == task_id:
+                if "text" in body:
+                    task.text = (body["text"] or "").strip() or task.text
+                if "color" in body:
+                    task.color = (body["color"] or "#f4f4f4").strip()
+                if "category" in body:
+                    task.category = (body["category"] or "").strip()
+                return _json_response({
+                    "task": {"id": task.id, "text": task.text, "done": task.done, "color": task.color, "category": task.category},
+                    "lists": _serialize_checklists(chat_id),
+                })
+
+    return _json_response({"error": "task not found"}, 404)
+
+
 async def api_delete_task(request: web.Request) -> web.Response:
     chat_id = _auth(request)
     if chat_id is None:
@@ -297,11 +322,13 @@ def main() -> None:
     api_app.router.add_route("OPTIONS", "/api/tasks", handle_options)
     api_app.router.add_route("OPTIONS", "/api/tasks/add", handle_options)
     api_app.router.add_route("OPTIONS", "/api/tasks/toggle", handle_options)
+    api_app.router.add_route("OPTIONS", "/api/tasks/update", handle_options)
     api_app.router.add_route("OPTIONS", "/api/tasks/delete", handle_options)
 
     api_app.router.add_get("/api/tasks", api_get_tasks)
     api_app.router.add_post("/api/tasks/add", api_add_task)
     api_app.router.add_post("/api/tasks/toggle", api_toggle_task)
+    api_app.router.add_post("/api/tasks/update", api_update_task)
     api_app.router.add_post("/api/tasks/delete", api_delete_task)
 
     docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
