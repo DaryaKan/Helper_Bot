@@ -5,10 +5,10 @@ Telegram-бот с интерактивным чеклистом через Mini
 ## Архитектура
 
 ```
-Telegram ←→ бот (Python, polling) ←→ API (aiohttp :8080) ←→ Mini App (GitHub Pages)
+Telegram ←→ бот (Python, polling + aiohttp :8080) ←→ Mini App (встроен в тот же сервер)
 ```
 
-- **bot.py** — Telegram-бот + HTTP API сервер
+- **bot.py** — Telegram-бот + HTTP API + раздача статики (`docs/`)
 - **docs/index.html** — Mini App (фронтенд чеклиста)
 
 ## Быстрый запуск
@@ -36,9 +36,14 @@ cp .env.example .env
 
 ```env
 BOT_TOKEN=ваш_токен_из_BotFather
-WEBAPP_URL=https://your-username.github.io/Helper_Bot/
+WEBAPP_URL=https://your-domain.com/index.html
 API_PORT=8080
 ```
+
+> **WEBAPP_URL** должен быть HTTPS. Варианты:
+> - VPS с доменом и SSL-сертификатом — `https://your-domain.com/index.html`
+> - ngrok/cloudflared для локальной разработки — `https://xxxx.ngrok-free.app/index.html`
+> - GitHub Pages (если API на отдельном сервере) — `https://user.github.io/Helper_Bot/?api=https://your-api.com`
 
 4. Запустите бота:
 
@@ -48,14 +53,7 @@ python bot.py
 
 Бот запускает одновременно:
 - Telegram polling
-- API сервер на `http://0.0.0.0:8080`
-
-## Настройка GitHub Pages
-
-1. Перейдите в **Settings → Pages** вашего репозитория
-2. Source: **Deploy from a branch**
-3. Branch: `main`, папка: `/docs`
-4. Сохраните — через минуту Mini App будет доступен по URL
+- HTTP-сервер на `http://0.0.0.0:8080` (API + статика `docs/`)
 
 ## Команды бота
 

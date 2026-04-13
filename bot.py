@@ -206,8 +206,12 @@ async def api_delete_task(request: web.Request) -> web.Response:
 # Telegram bot handlers
 # ---------------------------------------------------------------------------
 
+def _webapp_url() -> str:
+    return os.getenv("WEBAPP_URL", "")
+
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    webapp_url = os.getenv("WEBAPP_URL", "")
+    webapp_url = _webapp_url()
     if not webapp_url:
         await update.message.reply_text(
             "Привет! Я Helper_Bot 📋\n"
@@ -227,7 +231,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_checklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    webapp_url = os.getenv("WEBAPP_URL", "")
+    webapp_url = _webapp_url()
     if not webapp_url:
         await update.message.reply_text("WEBAPP_URL не настроен.")
         return
@@ -294,6 +298,10 @@ def main() -> None:
     api_app.router.add_post("/api/tasks/add", api_add_task)
     api_app.router.add_post("/api/tasks/toggle", api_toggle_task)
     api_app.router.add_post("/api/tasks/delete", api_delete_task)
+
+    docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
+    if os.path.isdir(docs_dir):
+        api_app.router.add_static("/", docs_dir, name="static")
 
     # --- Telegram bot ---
     application = Application.builder().token(token).build()

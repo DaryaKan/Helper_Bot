@@ -393,7 +393,8 @@ const COLORS = ["card-peach","card-yellow","card-green","card-blue","card-pink",
 
 function getApiBase() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("api") || "";
+  if (params.get("api")) return params.get("api");
+  return window.location.origin;
 }
 
 function authHeaders() {
