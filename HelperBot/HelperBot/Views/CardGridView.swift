@@ -113,7 +113,6 @@ struct CardGridView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: Capsule())
 
             Button(action: submitQuickAdd) {
                 Image(systemName: "plus")
@@ -127,7 +126,7 @@ struct CardGridView: View {
         .padding(.vertical, 10)
         .background(
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(Color.clear)
                 .ignoresSafeArea(edges: .bottom)
         )
     }
