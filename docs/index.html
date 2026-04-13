@@ -84,6 +84,13 @@
   .card-check svg { width: 13px; height: 13px; opacity: 0; transition: opacity 0.2s; }
   .card.done .card-check svg { opacity: 1; }
 
+  .card-drawing {
+    position: absolute; inset: 0;
+    border-radius: var(--card-radius);
+    pointer-events: none;
+    object-fit: contain;
+  }
+
   .card-category { font-size: 13px; color: var(--hint); font-weight: 400; margin-top: 2px; }
   .card-emoji { font-size: 28px; margin-bottom: 8px; }
 
@@ -447,13 +454,16 @@ function openEditor(taskId) {
   if (!task) return;
 
   editorState = { taskId, color: task.color || "#f4f4f4", category: task.category || "", mode: "text" };
-  document.getElementById("editorInput").value = task.text;
+  document.getElementById("editorInput").value = task.text === "(рисунок)" ? "" : task.text;
   initEditorPanel();
-  setMode("text");
+  setMode(task.drawing ? "draw" : "text");
   document.getElementById("editorCard").style.background = editorState.color;
   document.getElementById("overlay").classList.add("open");
   clearCanvas();
-  setTimeout(() => document.getElementById("editorInput").focus(), 300);
+  if (task.drawing) {
+    restoreDrawing(task.drawing);
+  }
+  if (!task.drawing) setTimeout(() => document.getElementById("editorInput").focus(), 300);
   try { tg.HapticFeedback.impactOccurred("light"); } catch(e) {}
 }
 
@@ -474,22 +484,34 @@ function closeEditor() {
   document.getElementById("overlay").classList.remove("open");
 }
 
+function getCanvasData() {
+  const canvas = document.getElementById("drawCanvas");
+  const ctx = canvas.getContext("2d");
+  const px = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < px.length; i += 4) { if (px[i] > 0) return canvas.toDataURL("image/png"); }
+  return "";
+}
+
 async function saveEditor() {
   const text = document.getElementById("editorInput").value.trim();
-  if (!text) { showToast("Введи текст задачи"); return; }
+  const drawingData = getCanvasData();
+  if (!text && !drawingData) { showToast("Добавь текст или рисунок"); return; }
   if (!API_BASE) { closeEditor(); return; }
+
+  const payload = { text: text || "(рисунок)", color: editorState.color, category: editorState.category, drawing: drawingData };
 
   try {
     let res;
     if (editorState.taskId) {
+      payload.task_id = editorState.taskId;
       res = await fetch(API_BASE + "/api/tasks/update", {
         method: "POST", headers: authHeaders(),
-        body: JSON.stringify({ task_id: editorState.taskId, text, color: editorState.color, category: editorState.category }),
+        body: JSON.stringify(payload),
       });
     } else {
       res = await fetch(API_BASE + "/api/tasks/add", {
         method: "POST", headers: authHeaders(),
-        body: JSON.stringify({ text, color: editorState.color, category: editorState.category }),
+        body: JSON.stringify(payload),
       });
     }
     const data = await res.json();
@@ -571,6 +593,17 @@ function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+function restoreDrawing(dataUrl) {
+  const canvas = document.getElementById("drawCanvas");
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  };
+  img.src = dataUrl;
+}
+
 function getDrawPos(e) {
   const canvas = document.getElementById("drawCanvas");
   const rect = canvas.getBoundingClientRect();
@@ -636,8 +669,10 @@ function render() {
       const doneClass = task.done ? " done" : "";
       const bg = task.color || "#f4f4f4";
       const cat = task.category ? `<div class="card-category">${escapeHtml(task.category)}</div>` : "";
+      const drawImg = task.drawing ? `<img class="card-drawing" src="${task.drawing}" alt="">` : "";
       html += `
         <div class="card${doneClass}" style="background:${bg}" onclick="openEditor('${task.id}')">
+          ${drawImg}
           <div class="card-text">${escapeHtml(task.text)}</div>
           ${cat}
           <div class="card-footer">
