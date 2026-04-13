@@ -80,9 +80,6 @@ struct DefaultCardView: View {
                 .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(card.emoji)
-                    .font(.system(size: 32))
-
                 Spacer()
 
                 Text(card.title)
