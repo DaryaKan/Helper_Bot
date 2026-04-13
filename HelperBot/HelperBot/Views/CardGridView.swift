@@ -101,27 +101,17 @@ struct CardGridView: View {
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                    .font(.system(size: 15))
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.system(size: 15))
 
-                TextField("Новая задача...", text: $inputText)
-                    .font(.system(size: 15, design: .rounded))
-                    .onSubmit { submitQuickAdd() }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-
-            Button(action: submitQuickAdd) {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color(.label), in: Circle())
-            }
+            TextField("Новая задача...", text: $inputText)
+                .font(.system(size: 15, design: .rounded))
+                .onSubmit { submitQuickAdd() }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(
