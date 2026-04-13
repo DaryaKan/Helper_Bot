@@ -5,7 +5,7 @@ struct CardGridView: View {
     @State private var editorTask: TaskItem?
     @State private var editorDefaultCard: DefaultCard?
     @State private var showEditor = false
-    @Namespace private var cardNamespace
+    @State private var inputText = ""
 
     private let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -15,31 +15,55 @@ struct CardGridView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
-                GlassEffectContainer {
+                VStack(spacing: 0) {
+                    header.padding(.bottom, 8)
+
                     if store.allTasks.isEmpty {
                         defaultGrid
                     } else {
                         taskGrid
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 100)
             }
 
             inputBar
         }
-        .background(Color.white)
+        .background(Color(hex: "#f5f1e8") ?? Color(.systemGray6))
         .sheet(isPresented: $showEditor) {
             editorSheet
         }
     }
 
+    private var header: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Мои задачи")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+
+                if store.totalCount > 0 {
+                    Text("\(store.totalCount) задач · \(store.doneCount) выполнено")
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 18))
+                .foregroundStyle(.secondary)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .padding(.top, 8)
+    }
+
     private var defaultGrid: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(Array(defaultCards.enumerated()), id: \.element.id) { idx, card in
+            ForEach(defaultCards) { card in
                 DefaultCardView(card: card)
-                    .glassEffectID("default-\(idx)", in: cardNamespace)
                     .onTapGesture {
                         editorDefaultCard = card
                         editorTask = nil
@@ -65,13 +89,10 @@ struct CardGridView: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(list.tasks) { task in
                         CardView(task: task)
-                            .glassEffectID("task-\(task.id)", in: cardNamespace)
                             .onTapGesture {
-                                withAnimation(.bouncy) {
-                                    editorTask = task
-                                    editorDefaultCard = nil
-                                    showEditor = true
-                                }
+                                editorTask = task
+                                editorDefaultCard = nil
+                                showEditor = true
                             }
                     }
                 }
@@ -80,34 +101,36 @@ struct CardGridView: View {
     }
 
     private var inputBar: some View {
-        GlassEffectContainer {
-            HStack(spacing: 10) {
-                TextField("Добавить задачу...", text: $inputText)
-                    .font(.system(size: 15, design: .rounded))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 11)
-                    .glassEffect(.regular, in: .capsule)
-                    .onSubmit { submitQuickAdd() }
+        HStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                    .font(.system(size: 15))
 
-                Button(action: submitQuickAdd) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 42, height: 42)
-                }
-                .glassEffect(.regular.interactive().tint(.primary), in: .circle)
+                TextField("Новая задача...", text: $inputText)
+                    .font(.system(size: 15, design: .rounded))
+                    .onSubmit { submitQuickAdd() }
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 14)
             .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+
+            Button(action: submitQuickAdd) {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Color(.label), in: Circle())
+            }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .background(
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea(edges: .bottom)
         )
     }
-
-    @State private var inputText = ""
 
     private func submitQuickAdd() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
